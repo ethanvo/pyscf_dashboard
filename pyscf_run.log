@@ -1,0 +1,177 @@
+#INFO: **** input file is /Users/ethanvo/builds/pyscf_dashboard/mock_calc.py ****
+#!/usr/bin/env python3
+"""
+Mock PySCF RHF/6-31G calculation on Aspirin (C9H8O4).
+Injects a 2-second sleep per SCF cycle so the dashboard can be observed.
+Output is streamed to pyscf_run.log.
+"""
+
+import time
+from pyscf import gto, scf
+
+# Aspirin (C9H8O4) - 21 atoms
+# Benzene ring in xy-plane; carboxylic acid at C1, acetyloxy at C2.
+# Distances: C-C(ar)=1.40, C-C(sp2)=1.49, C=O=1.22, C-O=1.34-1.36, O-H=0.96, C-H(ar)=1.08, C-H(sp3)=1.09
+ASPIRIN_GEOMETRY = """
+ C   0.0000   1.4050   0.0000
+ C   1.2165   0.7025   0.0000
+ C   1.2165  -0.7025   0.0000
+ C   0.0000  -1.4050   0.0000
+ C  -1.2165  -0.7025   0.0000
+ C  -1.2165   0.7025   0.0000
+ C   0.0000   2.8900   0.0000
+ O   1.0570   3.5000   0.0000
+ O  -1.1780   3.5700   0.0000
+ H  -1.0020   4.5150   0.0000
+ O   2.3810   1.3750   0.0000
+ C   3.5410   0.7050   0.0000
+ O   4.5980   1.3150   0.0000
+ C   3.5410  -0.8150   0.0000
+ H   2.1520  -1.2430   0.0000
+ H   0.0000  -2.4850   0.0000
+ H  -2.1520  -1.2430   0.0000
+ H  -2.1520   1.2430   0.0000
+ H   4.5690  -1.1790   0.0000
+ H   3.0270  -1.1790   0.8900
+ H   3.0270  -1.1790  -0.8900
+"""
+
+
+def run_aspirin_scf():
+    mol = gto.Mole()
+    mol.atom = ASPIRIN_GEOMETRY
+    mol.basis = "6-31g"
+    mol.charge = 0
+    mol.spin = 0
+    mol.output = "pyscf_run.log"
+    mol.verbose = 4
+    mol.max_memory = 4000
+    mol.build()
+
+    # Flush after build so initialization info lands in the log immediately
+    mol.stdout.flush()
+
+    mf = scf.RHF(mol)
+    mf.max_cycle = 150
+    mf.conv_tol = 1e-9
+
+    def slow_callback(envs):
+        """Flush log and sleep so the dashboard has time to update."""
+        mol.stdout.flush()
+        time.sleep(2.0)
+
+    mf.callback = slow_callback
+
+    print("=" * 60)
+    print("  Quantum Cruncher — Mock Aspirin RHF/6-31G Calculation")
+    print("  Output  : pyscf_run.log")
+    print("  Sleep   : 2s per SCF cycle (for dashboard demo)")
+    print("=" * 60, flush=True)
+
+    energy = mf.kernel()
+    mol.stdout.flush()
+
+    print(f"\nFinal RHF/6-31G Energy: {energy:.10f} Hartree", flush=True)
+
+
+if __name__ == "__main__":
+    run_aspirin_scf()
+#INFO: ******************** input file end ********************
+
+
+System: uname_result(system='Darwin', node='Ethans-MacBook-Air.local', release='25.4.0', version='Darwin Kernel Version 25.4.0: Thu Mar 19 19:33:43 PDT 2026; root:xnu-12377.101.15~1/RELEASE_ARM64_T8142', machine='arm64')  Threads 10
+Python 3.14.0 (main, Mar 29 2026, 17:48:21) [Clang 21.0.0 (clang-2100.0.123.102)]
+numpy 2.3.4  scipy 1.16.3  h5py 3.14.0
+Date: Fri Apr  3 17:45:58 2026
+PySCF version 2.12.0
+PySCF path  /Users/ethanvo/builds/pyscf-2.12.0/pyscf
+
+[ENV] PYSCF_MAX_MEMORY 24000
+[CONFIG] conf_file None
+[INPUT] verbose = 4
+[INPUT] num. atoms = 21
+[INPUT] num. electrons = 94
+[INPUT] charge = 0
+[INPUT] spin (= nelec alpha-beta = 2S) = 0
+[INPUT] symmetry False subgroup None
+[INPUT] Mole.unit = angstrom
+[INPUT] Symbol           X                Y                Z      unit          X                Y                Z       unit  Magmom
+[INPUT]  1 C      0.000000000000   1.405000000000   0.000000000000 AA    0.000000000000   2.655065205014   0.000000000000 Bohr   0.0
+[INPUT]  2 C      1.216500000000   0.702500000000   0.000000000000 AA    2.298851830533   1.327532602507   0.000000000000 Bohr   0.0
+[INPUT]  3 C      1.216500000000  -0.702500000000   0.000000000000 AA    2.298851830533  -1.327532602507   0.000000000000 Bohr   0.0
+[INPUT]  4 C      0.000000000000  -1.405000000000   0.000000000000 AA    0.000000000000  -2.655065205014   0.000000000000 Bohr   0.0
+[INPUT]  5 C     -1.216500000000  -0.702500000000   0.000000000000 AA   -2.298851830533  -1.327532602507   0.000000000000 Bohr   0.0
+[INPUT]  6 C     -1.216500000000   0.702500000000   0.000000000000 AA   -2.298851830533   1.327532602507   0.000000000000 Bohr   0.0
+[INPUT]  7 C      0.000000000000   2.890000000000   0.000000000000 AA    0.000000000000   5.461308499993   0.000000000000 Bohr   0.0
+[INPUT]  8 O      1.057000000000   3.500000000000   0.000000000000 AA    1.997440513665   6.614041435978   0.000000000000 Bohr   0.0
+[INPUT]  9 O     -1.178000000000   3.570000000000   0.000000000000 AA   -2.226097374738   6.746322264697   0.000000000000 Bohr   0.0
+[INPUT] 10 H     -1.002000000000   4.515000000000   0.000000000000 AA   -1.893505576814   8.532113452411   0.000000000000 Bohr   0.0
+[INPUT] 11 O      2.381000000000   1.375000000000   0.000000000000 AA    4.499437902589   2.598373421277   0.000000000000 Bohr   0.0
+[INPUT] 12 C      3.541000000000   0.705000000000   0.000000000000 AA    6.691520207085   1.332256917818   0.000000000000 Bohr   0.0
+[INPUT] 13 O      4.598000000000   1.315000000000   0.000000000000 AA    8.688960720750   2.484989853803   0.000000000000 Bohr   0.0
+[INPUT] 14 C      3.541000000000  -0.815000000000   0.000000000000 AA    6.691520207085  -1.540126791521   0.000000000000 Bohr   0.0
+[INPUT] 15 H      2.152000000000  -1.243000000000   0.000000000000 AA    4.066690620064  -2.348929572834   0.000000000000 Bohr   0.0
+[INPUT] 16 H      0.000000000000  -2.485000000000   0.000000000000 AA    0.000000000000  -4.695969419544   0.000000000000 Bohr   0.0
+[INPUT] 17 H     -2.152000000000  -1.243000000000   0.000000000000 AA   -4.066690620064  -2.348929572834   0.000000000000 Bohr   0.0
+[INPUT] 18 H     -2.152000000000   1.243000000000   0.000000000000 AA   -4.066690620064   2.348929572834   0.000000000000 Bohr   0.0
+[INPUT] 19 H      4.569000000000  -1.179000000000   0.000000000000 AA    8.634158663138  -2.227987100862   0.000000000000 Bohr   0.0
+[INPUT] 20 H      3.027000000000  -1.179000000000   0.890000000000 AA    5.720200979058  -2.227987100862   1.681856250863 Bohr   0.0
+[INPUT] 21 H      3.027000000000  -1.179000000000  -0.890000000000 AA    5.720200979058  -2.227987100862  -1.681856250863 Bohr   0.0
+
+nuclear repulsion = 778.706776232698
+number of shells = 81
+number of NR pGTOs = 318
+number of NR cGTOs = 133
+basis = 6-31g
+ecp = {}
+CPU time:         0.33
+
+
+******** <class 'pyscf.scf.hf.RHF'> ********
+method = RHF
+initial guess = minao
+damping factor = 0
+level_shift factor = 0
+DIIS = <class 'pyscf.scf.diis.CDIIS'>
+diis_start_cycle = 1
+diis_space = 8
+diis_damp = 0
+SCF conv_tol = 1e-09
+SCF conv_tol_grad = None
+SCF max_cycles = 150
+direct_scf = True
+direct_scf_tol = 1e-13
+chkfile to save SCF result = /var/folders/h0/1kc8dctj2dv4rm3kxg5smvmr0000gn/T/tmpyysqjpx3
+max_memory 4000 MB (current use 0 MB)
+Set gradient conv threshold to 3.16228e-05
+Initial guess from minao.
+init E= -648.824090135846
+  HOMO = -0.218487934448952  LUMO = -0.00379892692455825
+cycle= 1 E= -644.117056645218  delta_E= 4.71  |g|= 1.21  |ddm|= 4.94
+  HOMO = -0.324567002675866  LUMO = 0.00800223131290314
+cycle= 2 E= -644.319188062479  delta_E= -0.202  |g|=    1  |ddm|= 2.97
+  HOMO = -0.352755009602858  LUMO = 0.0568580202663121
+cycle= 3 E= -644.512513475051  delta_E= -0.193  |g|= 0.118  |ddm|= 1.36
+  HOMO = -0.344245479325754  LUMO = 0.0704991510427397
+cycle= 4 E= -644.517453321713  delta_E= -0.00494  |g|= 0.0598  |ddm|= 0.24
+  HOMO = -0.344555337691503  LUMO = 0.0710947542533095
+cycle= 5 E= -644.518453526521  delta_E= -0.001  |g|= 0.0154  |ddm|= 0.0925
+  HOMO = -0.345360630745448  LUMO = 0.0708259541466763
+cycle= 6 E= -644.518625342453  delta_E= -0.000172  |g|= 0.00809  |ddm|= 0.051
+  HOMO = -0.344599333639919  LUMO = 0.0715569530494769
+cycle= 7 E= -644.518670165946  delta_E= -4.48e-05  |g|= 0.00321  |ddm|= 0.0289
+  HOMO = -0.344523284634392  LUMO = 0.071804906592498
+cycle= 8 E= -644.518675704492  delta_E= -5.54e-06  |g|= 0.00127  |ddm|= 0.00959
+  HOMO = -0.34452463974881  LUMO = 0.0718166612418337
+cycle= 9 E= -644.518676436184  delta_E= -7.32e-07  |g|= 0.000385  |ddm|= 0.0029
+  HOMO = -0.344522585083938  LUMO = 0.0717896739316976
+cycle= 10 E= -644.518676498746  delta_E= -6.26e-08  |g|= 0.000131  |ddm|= 0.000826
+  HOMO = -0.344510401528831  LUMO = 0.0718029121671479
+cycle= 11 E= -644.518676505949  delta_E= -7.2e-09  |g|= 4.57e-05  |ddm|= 0.000261
+  HOMO = -0.344511045133126  LUMO = 0.0717999239308292
+cycle= 12 E= -644.518676506968  delta_E= -1.02e-09  |g|= 2.32e-05  |ddm|= 0.000129
+  HOMO = -0.344510430077096  LUMO = 0.071799300871765
+cycle= 13 E= -644.518676507258  delta_E= -2.9e-10  |g|= 8.86e-06  |ddm|= 5.53e-05
+  HOMO = -0.344510123845331  LUMO = 0.071799391307154
+Extra cycle  E= -644.518676507322  delta_E= -6.46e-11  |g|= 5.43e-06  |ddm|= 1.81e-05
+converged SCF energy = -644.518676507322

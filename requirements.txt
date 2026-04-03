@@ -1,0 +1,5 @@
+pyscf
+textual
+textual-plotext
+pandas
+watchdog
